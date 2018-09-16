@@ -5,9 +5,9 @@ using System.Net;
 using System.Text;
 using HtmlAgilityPack;
 
-namespace IBOTracker.Parsing
+namespace IBTracker.Parsing
 {
-    public static class ParserExtensions
+    public static class Extensions
     {
         public static void ParsePages(Func<int, Uri> pagesFunc, Func<HtmlDocument, bool> parseFunc)
         {

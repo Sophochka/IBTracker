@@ -8,8 +8,9 @@ using System.Threading;
 using Google.Apis.Util.Store;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4.Data;
+using IBTracker.Common;
 
-namespace IBOTracker.Google
+namespace IBTracker.Google
 {
     internal static class Services
     {
@@ -39,7 +40,10 @@ namespace IBOTracker.Google
         public static void Clear()
         {
             sheetServices.Clear();
-            Directory.Delete("./Google/token.$$$", true);
+            if (Directory.Exists("./Google/token.$$$"))
+            {
+               Directory.Delete("./Google/token.$$$", true);
+            }
         }
 
         private static void InitSheetCredential()

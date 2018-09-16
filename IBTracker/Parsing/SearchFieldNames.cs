@@ -1,4 +1,4 @@
-﻿namespace IBOTracker.Parsing
+﻿namespace IBTracker.Parsing
 {
     public static class SearchFieldNames
     {

@@ -9,7 +9,7 @@ using Google.Apis.Util.Store;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4.Data;
 
-namespace IBOTracker.Google
+namespace IBTracker.Google
 {
     internal class Sheets
     {

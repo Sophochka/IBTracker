@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace IBOTracker
+namespace IBTracker.Common
 {
     public class IBSchool
     {
@@ -25,13 +25,6 @@ namespace IBOTracker
 
         public bool AllProgramm => PYP && MYP && DP && CP;
 
-        public ICollection<string> Languages { get; } = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-
-        public void SetLanguages(string text)
-        {
-            var list = text.Split("\r\n").Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)).ToList();
-            Languages.Clear();
-            list.ForEach(l => Languages.Add(l));
-        }
+        public string Languages { get; set; }
     }
 }

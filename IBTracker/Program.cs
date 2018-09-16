@@ -1,13 +1,17 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
-using IBOTracker.Google;
-using IBOTracker.Parsing;
+using IBTracker.Common;
+using IBTracker.Google;
+using IBTracker.Parsing;
+using IBTracker.Data;
 
-namespace IBOTracker
+namespace IBTracker
 {
     class Program
     {
         private const string AppName = "IBO_School_Tracker";
+        private const string DatabasePath = "./Database/IBSchools.db";
         private static readonly Logger.Level LogLevel = Logger.Level.Info;
 
         private static SearchFields SearchFields = new SearchFields
@@ -27,12 +31,17 @@ namespace IBOTracker
 
             var parser = new SchoolParser();
             var schools = parser.Parse(SearchFields);
-            Logger.Info($"Found {schools.Count()} schools");
+            Logger.Info($"Found {schools.Count()} schools. Add to database...");
 
-            var scheets = new Sheets(AppName);
-            scheets.Test();
+            var database = new IBSchoolDb(DatabasePath);
+            database.CreateTable(schools);
+
+            //var scheets = new Sheets(AppName);
+            //scheets.Test();
 
             Services.Clear();
+
+            Logger.Info($"Press any key...");
             Console.ReadLine();
         }
     }

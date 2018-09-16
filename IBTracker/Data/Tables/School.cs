@@ -1,7 +1,8 @@
+using System;
 using SQLite;
 using IBTracker.Common;
 
-namespace IBTracker.Data
+namespace IBTracker.Data.Tables
 {
     public class School
     {
@@ -16,6 +17,10 @@ namespace IBTracker.Data
         public bool CP { get; set; }
         public string Languages { get; set; }
 
+        public School()
+        {
+        }
+
         public School(IBSchool school)
         {
             Name = school.Name;
@@ -25,6 +30,20 @@ namespace IBTracker.Data
             DP = school.DP;
             CP = school.CP;
             Languages = school.Languages;
+        }
+
+        public IBSchool ToObject()
+        {
+            return new IBSchool
+            {
+                Name = Name,
+                Site = new Uri(Site),
+                PYP = PYP,
+                MYP = MYP,
+                DP = DP,
+                CP = CP,
+                Languages = Languages
+            };
         }
     }
 }

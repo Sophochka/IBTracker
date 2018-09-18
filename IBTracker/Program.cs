@@ -13,7 +13,7 @@ namespace IBTracker
     class Program
     {
         private const string AppName = "IBO_School_Tracker";
-        private const string DatabasePath = "IBSchools.db"; //"./Database/IBSchools.db";
+        private const string DatabasePath = "./Database/IBSchools.db";
         private static readonly Logger.Level LogLevel = Logger.Level.Debug;
 
         private static SearchFields SearchFields = new SearchFields

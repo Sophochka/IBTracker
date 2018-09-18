@@ -9,7 +9,7 @@ namespace IBTracker.Parsing
 {
     public static class Extensions
     {
-        public static void ParsePages(Func<int, Uri> pagesFunc, Func<HtmlDocument, bool> parseFunc)
+        public static void ParsePages(Func<int, Uri> pagesFunc, Func<HtmlDocument, bool> parseFunc, int maxPage = 10)
         {
             var page = 1;
             var completed = false;
@@ -20,10 +20,11 @@ namespace IBTracker.Parsing
                 var document = new HtmlDocument();
                 document.Load(webClient.OpenRead(url), Encoding.UTF8);
                 completed = parseFunc(document);
-            } while (!completed);
+            } while (!completed && page <= maxPage);
         }
 
-        public static IEnumerable<T> ParseTable<T>(this HtmlDocument document, string path, Func<HtmlNodeCollection, T> rowFunc)
+        public static IEnumerable<T> 
+        ParseTable<T>(this HtmlDocument document, string path, Func<HtmlNodeCollection, T> rowFunc)
         {
             var table = document.DocumentNode.SelectNodes(path).FirstOrDefault();
             if (table == null) return Enumerable.Empty<T>();

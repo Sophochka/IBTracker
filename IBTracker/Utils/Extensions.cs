@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using HtmlAgilityPack;
 
-namespace IBTracker.Parsing
+namespace IBTracker.Utils
 {
     public static class Extensions
     {
@@ -23,8 +23,7 @@ namespace IBTracker.Parsing
             } while (!completed && page <= maxPage);
         }
 
-        public static IEnumerable<T> 
-        ParseTable<T>(this HtmlDocument document, string path, Func<HtmlNodeCollection, T> rowFunc)
+        public static IEnumerable<T> ParseTable<T>(this HtmlDocument document, string path, Func<HtmlNodeCollection, T> rowFunc)
         {
             var table = document.DocumentNode.SelectNodes(path).FirstOrDefault();
             if (table == null) return Enumerable.Empty<T>();

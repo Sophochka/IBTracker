@@ -1,6 +1,9 @@
-namespace IBTracker.Parsing
+using SQLite;
+
+namespace IBTracker.Data
 {
-    public class RatingPL
+    [Table("Ratings")]
+    public class RatingPartPL : BasePart
     {
         public string Name { get; set; }
         public string City { get; set; }

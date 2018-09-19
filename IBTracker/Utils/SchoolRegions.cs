@@ -1,4 +1,4 @@
-namespace IBTracker.Parsing
+namespace IBTracker.Utils
 {
     public static class SchoolRegions
     {

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using HtmlAgilityPack;
-using IBTracker.Common;
+using IBTracker.Contracts;
+using IBTracker.Utils;
 
-namespace IBTracker.Parsing
+namespace IBTracker.Data
 {
-    public class NationalRatingPL : INationalRating
+    public class RatingPartHandlerPL : IPartHandler
     {
         private const int CellInRow = 13;
         private const string PageParameterName = "strona";
@@ -16,9 +17,9 @@ namespace IBTracker.Parsing
 
         private const string RatingTablePath = "//*[@id=\"content_tabele\"]/table/tbody";
 
-        public IEnumerable<RatingPL> Parse()
+        public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
         {
-            var ratings = new List<RatingPL>();
+            var ratings = new List<RatingPartPL>();
             Extensions.ParsePages(
                 (page) => BuildPageUri(page), 
                 (document) => 
@@ -31,6 +32,12 @@ namespace IBTracker.Parsing
             return ratings;
         }
 
+        public void Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
+        {
+            
+
+        }
+
         private Uri BuildPageUri(int page)
         {
             var builder = new UriBuilder(PageUri);
@@ -40,12 +47,12 @@ namespace IBTracker.Parsing
             return builder.Uri;
         }
 
-        private RatingPL ParseRow(HtmlNodeCollection rowCells)
+        private RatingPartPL ParseRow(HtmlNodeCollection rowCells)
         {
             if (rowCells == null || rowCells.Count != CellInRow) return null;
             var znak = rowCells[11].InnerHtml;
 
-            var rating = new RatingPL
+            var rating = new RatingPartPL
             {
                 Name = rowCells[1].InnerText,
                 City = rowCells[2].InnerText,

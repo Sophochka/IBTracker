@@ -6,12 +6,12 @@ using System.Net;
 using System.Text;
 using System.Web;
 using HtmlAgilityPack;
-using IBTracker.Common;
-using IBTracker.Data.Tables;
+using IBTracker.Contracts;
+using IBTracker.Utils;
 
-namespace IBTracker.Parsing
+namespace IBTracker.Data
 {
-    public class SchoolParser
+    public class SchoolPartHandler : IPartHandler
     {
         private const int CellInRow = 6;
         private const string PageParameterName = "page";
@@ -25,31 +25,46 @@ namespace IBTracker.Parsing
         private const string QueryTrue = "true";
         private const string QueryFalse = "false";
 
-        public IEnumerable<School> Parse(SearchFields fields)
+        private SearchFields fields;
+
+        public Type PartType => typeof(SchoolPart);
+
+        public SchoolPartHandler(SearchFields fields)
         {
-            var schools = new List<School>();
+            this.fields = fields;
+        }
+
+        public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
+        {
+            var parts = new List<SchoolPart>();
             Extensions.ParsePages(
                 (page) => BuildUri(fields, page), 
                 (document) => 
                 {
-                    var items = document.ParseTable(SchoolTablePath, ParseRow);
-                    schools.AddRange(items);
+                    var items = document.ParseTable<SchoolPart>(SchoolTablePath, ParseRow);
+                    parts.AddRange(items);
                     return !items.Any();
                 });
 
-            return schools;
+            return parts;
+        }
+
+        public void Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
+        {
+            
+
         }
 
         private Uri BuildUri(SearchFields fields, int page)
         {
             var builder = new UriBuilder(SchoolSearchUri);
             var query = HttpUtility.ParseQueryString(builder.Query);
-            query[SearchFieldNames.Region] = fields.Region;
-            query[SearchFieldNames.Country] = fields.Country;
-            query[SearchFieldNames.Keywords] = fields.Keywords;
-            query[SearchFieldNames.Language] = fields.Language;
-            query[SearchFieldNames.BoardingFacilities] = fields.BoardingFacilities;
-            query[SearchFieldNames.SchoolGender] = fields.SchoolGender;
+            query["SearchFields.Region"] = fields.Region;
+            query["SearchFields.Country"] = fields.Country;
+            query["SearchFields.Keywords"] = fields.Keywords;
+            query["SearchFields.Language"] = fields.Language;
+            query["SearchFields.BoardingFacilities"] = fields.BoardingFacilities;
+            query["SearchFields.SchoolGender"] = fields.SchoolGender;
             if (page > 1)
             {
                 query[PartialParameterName] = QueryTrue;
@@ -62,12 +77,12 @@ namespace IBTracker.Parsing
             return builder.Uri;
         }
 
-        private School ParseRow(HtmlNodeCollection rowCells)
+        private SchoolPart ParseRow(HtmlNodeCollection rowCells)
         {
             if (rowCells == null || rowCells.Count != CellInRow) return null;
             if (!rowCells[0].ParseLink(out string name, out string uri)) return null;
 
-            var school = new School
+            var school = new SchoolPart()
             {
                 Name = name,
                 Site = new Uri(IBOUri, uri).AbsolutePath,

@@ -2,18 +2,17 @@
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using IBTracker.Common;
+using IBTracker.Contracts;
 using IBTracker.Google;
-using IBTracker.Parsing;
 using IBTracker.Data;
-using IBTracker.Data.Tables;
+using IBTracker.Utils;
 
 namespace IBTracker
 {
     class Program
     {
-        private const string AppName = "IBO_School_Tracker";
-        private const string DatabasePath = "./Database/IBSchools.db";
+        private const string AppName = "IBSchool_Tracker";
+        private const string DatabasePath = "./Data/Database/IBSchools.db";
         private static readonly Logger.Level LogLevel = Logger.Level.Debug;
 
         private static SearchFields SearchFields = new SearchFields
@@ -31,12 +30,10 @@ namespace IBTracker
             Logger.Init(LogLevel);
             Logger.Info($"Collect for country {SearchFields.Country}...");
 
-            var storage = new SchoolStorage(DatabasePath, SearchFields.ToString());
-            var schools = RetrieveSchools(SearchFields, storage, false);
-            Logger.Info($"Found {schools.Count()} schools.");
-
-            var ratings = RetrieveRating(storage, true);
-            Logger.Info($"Found {ratings.Count()} ratings.");
+            var schoolInfo = new List<SchoolInfo>();
+            var storage = new Storage(DatabasePath, SearchFields.ToString());
+            HandleParts<SchoolPart>(schoolInfo, new SchoolPartHandler(SearchFields), storage, true, true);
+            HandleParts<RatingPartPL>(schoolInfo, new RatingPartHandlerPL(), storage, false);
 
             //var scheets = new Sheets(AppName);
             //scheets.Test();
@@ -46,38 +43,33 @@ namespace IBTracker
             Console.ReadLine();
         }
 
-        private static IEnumerable<School> RetrieveSchools(SearchFields fields, SchoolStorage storage, bool forceRetrieve)
+        private static void HandleParts<T>(ICollection<SchoolInfo> schools, IPartHandler handler, Storage storage, bool forceRetrieve, bool clearIfRetrieve = false) where T : BasePart, new()
         {
+            IEnumerable<T> parts = null;
+
             if (!forceRetrieve)
             {
-                var stored = storage.Read<School>();
-                if (stored.Any())
-                {
-                    return stored;
-                }
+                parts = storage.Read<T>();
+                forceRetrieve = parts == null;
             }
 
-            var parser = new SchoolParser();
-            var schools = parser.Parse(fields);
-            storage.Write(schools, true);
-            return schools;
-        } 
-
-        private static IEnumerable<RatingPL> RetrieveRating(SchoolStorage storage, bool forceRetrieve)
-        {
-            if (!forceRetrieve)
+            if (forceRetrieve)
             {
-                var stored = storage.Read<RatingPL>();
-                if (stored.Any())
+                parts = new List<T>(handler.Read(schools) as IEnumerable<T>);
+                if (clearIfRetrieve) 
                 {
-                    return stored;
-                }
+                    storage.Clear();
+                }  
+
+                storage.Write(parts);
             }
 
-            var parser = new NationalRatingPL();
-            var ratings = parser.Parse();
-            storage.Write(ratings);
-            return ratings;
+            var name = typeof(T).Name;
+            name = name.Substring(0, name.IndexOf("Part"));
+            var action = forceRetrieve ? "Retrieved" : "Loaded";
+            Logger.Info($"{action} {parts.Count()} {name} items.");
+
+            handler.Link(schools, parts);
         } 
     }
 }

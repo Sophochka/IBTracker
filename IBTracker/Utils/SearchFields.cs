@@ -1,4 +1,4 @@
-namespace IBTracker.Parsing
+namespace IBTracker.Utils
 {
     public class SearchFields
     {

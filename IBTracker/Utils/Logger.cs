@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace IBTracker.Common
+namespace IBTracker.Utils
 {
     public static class Logger
     {

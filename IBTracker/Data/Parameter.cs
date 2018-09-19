@@ -1,7 +1,8 @@
 using SQLite;
 
-namespace IBTracker.Data.Tables
+namespace IBTracker.Data
 {
+    [Table("Parameters")]
     public class Parameter
     {
         [PrimaryKey]

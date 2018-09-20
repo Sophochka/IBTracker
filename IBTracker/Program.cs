@@ -108,13 +108,13 @@ namespace IBTracker
                 foreach (var link in links)
                 {
                     SchoolInfo info;
-                    if (!schools.TryGetValue(link.School, out info)) continue;
+                    if (!schools.TryGetValue(link.School, out info)) return -1;
 
-                    var id = propLink.GetValue(link) as int?;
-                    if (id == null) continue;
+                    var id = propLink.GetValue(link) as int? ?? 0;
+                    if (id == 0) continue;
 
                     BasePart part;
-                    if (!parts.TryGetValue(id.Value, out part)) continue;
+                    if (!parts.TryGetValue(id, out part)) return -1;
 
                     propInfo.SetValue(info, part, null);
                     count++;

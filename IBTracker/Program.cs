@@ -144,7 +144,7 @@ namespace IBTracker
             }
 
             Logger.Info($"Update links...", true);
-            storage.Write(links); 
+            storage.Write(links);
         }
     }
 }

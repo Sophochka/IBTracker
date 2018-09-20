@@ -27,7 +27,7 @@ namespace IBTracker
         {
             Handlers = new[]
             {
-                new HandlerParams(nameof(PartLink.School), new SchoolPartHandler(SearchFields), false, false, true),
+                new HandlerParams(nameof(PartLink.School), new SchoolPartHandler(SearchFields), true, false, true),
                 new HandlerParams(nameof(PartLink.Details), new DetailsPartHandler(), true, true),
                 // new HandlerParams(nameof(PartLink.Rating), new RatingPartHandlerPL(), false, false),
             };

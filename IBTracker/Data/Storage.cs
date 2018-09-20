@@ -17,12 +17,12 @@ namespace IBTracker.Data
 
         private string searchIndex;        
 
-        private SQLiteConnection connection;
+        public readonly SQLiteConnection Connection;
 
         public Storage(string databasePath, string index)
         {
             searchIndex = index;
-            connection = new SQLiteConnection(databasePath);
+            Connection = new SQLiteConnection(databasePath);
             if (searchIndex != ReadParameter(IndexParameterName))
             {
                 Clear();
@@ -31,36 +31,38 @@ namespace IBTracker.Data
 
         public void Clear()
         {
-            var command = connection.CreateCommand("SELECT NAME FROM SQLITE_MASTER WHERE TYPE = 'table'");
+            var command = Connection.CreateCommand("SELECT NAME FROM SQLITE_MASTER WHERE TYPE = 'table'");
             var records = command.ExecuteQuery<QueryRecord>();
             foreach(var rec in records.Where(r => !r.Name.StartsWith("sqlite")))
             {
-                command = connection.CreateCommand($"DROP TABLE '{rec.Name}'");
+                command = Connection.CreateCommand($"DROP TABLE '{rec.Name}'");
                 command.ExecuteNonQuery();
             }
 
             WriteParameter(IndexParameterName, searchIndex);
             WriteParameter(DateParameterName, DateTime.Now.ToString());
+            command = Connection.CreateCommand("CREATE VIEW IF NOT EXISTS VSchools AS SELECT Schools.*, Details.* FROM Schools INNER JOIN Details ON Details.Id = Schools.Id");
+            command.ExecuteNonQuery();
         }
 
         public void Dispose()
         {
-            connection.Close();
+            Connection.Close();
         }
 
         public IEnumerable<T> Read<T>() where T : new()
         {
             if (Exists<T>())
-                return connection.Table<T>();
+                return Connection.Table<T>();
             else      
                 return null;            
         }        
 
         public void Write<T>(IEnumerable<T> records)
         {
-            connection.DropTable<T>();
-            connection.CreateTable<T>();
-            records.ToList().ForEach(r => connection.Insert(r));
+            Connection.DropTable<T>();
+            Connection.CreateTable<T>();
+            records.ToList().ForEach(r => Connection.Insert(r));
         }
 
         private string GetTableName<T>()
@@ -72,7 +74,7 @@ namespace IBTracker.Data
 
         private bool Exists<T>()
         {
-            var command = connection.CreateCommand("SELECT COUNT(1) FROM SQLITE_MASTER WHERE TYPE = @TYPE AND NAME = @NAME");
+            var command = Connection.CreateCommand("SELECT COUNT(1) FROM SQLITE_MASTER WHERE TYPE = @TYPE AND NAME = @NAME");
             command.Bind("@TYPE", "table");
             command.Bind("@NAME", GetTableName<T>());
             
@@ -85,7 +87,7 @@ namespace IBTracker.Data
         {
             if (Exists<Parameter>())
             {
-                var parameter = connection.Find<Parameter>(p => p.Name == name);
+                var parameter = Connection.Find<Parameter>(p => p.Name == name);
                 return parameter?.Value;
             }
 
@@ -94,16 +96,16 @@ namespace IBTracker.Data
 
         private void WriteParameter(string name, string value)
         {
-            connection.CreateTable<Parameter>();
+            Connection.CreateTable<Parameter>();
             var parameter = new Parameter
             {
                 Name = name,
                 Value = value
             };
 
-            if(connection.Update(parameter) == 0)
+            if(Connection.Update(parameter) == 0)
             {
-                connection.Insert(parameter);
+                Connection.Insert(parameter);
             }
         }
     }

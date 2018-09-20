@@ -7,6 +7,6 @@ namespace IBTracker.Contracts
     public interface IPartHandler
     {
         IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools);
-        void Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts);
+        int Link(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IEnumerable<BasePart> parts);
     }
 }

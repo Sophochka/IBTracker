@@ -49,10 +49,22 @@ namespace IBTracker.Data
             return parts;
         }
 
-        public void Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
+        public int Link(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IEnumerable<BasePart> parts)
         {
-            
+            var schoolParts = parts as IEnumerable<SchoolPart>;
+            if (schoolParts == null) return 0;
 
+            schools.Clear();
+            foreach (var part in schoolParts)
+            {
+                schools.Add(
+                    new SchoolInfo
+                    {
+                        School = part
+                    });
+            }
+
+            return schools.Count;
         }
 
         private Uri BuildUri(SearchFields fields, int page)
@@ -80,12 +92,15 @@ namespace IBTracker.Data
         private SchoolPart ParseRow(HtmlNodeCollection rowCells)
         {
             if (rowCells == null || rowCells.Count != CellInRow) return null;
-            if (!rowCells[0].ParseLink(out string name, out string uri)) return null;
+            if (!rowCells[0].ParseLink(out string fullName, out string uri)) return null;
 
+            SplitNameAndCity(fullName, out string name, out string city);
             var school = new SchoolPart()
             {
+                FullName = fullName,
                 Name = name,
-                Site = new Uri(IBOUri, uri).AbsolutePath,
+                City = city,
+                Site = new Uri(IBOUri, uri).AbsoluteUri,
                 PYP = rowCells[1].ParseCheck(HTML.SPAN),
                 MYP = rowCells[2].ParseCheck(HTML.SPAN),
                 DP = rowCells[3].ParseCheck(HTML.SPAN),
@@ -95,6 +110,23 @@ namespace IBTracker.Data
             var languages = rowCells[5].InnerText.Split("\r\n").Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l));
             school.Languages = string.Join(",", languages);
             return school;
+        }
+
+        private void SplitNameAndCity(string fullName, out string name, out string city)
+        {
+            city = "";
+            name = fullName;
+            string[] delimiters = new[] { " of ", " w ", "," };
+            foreach (var delimiter in delimiters)
+            {
+                var pos = fullName.IndexOf(delimiter);
+                if (pos != -1)
+                {
+                    name = fullName.Substring(0, pos).Trim();
+                    city = fullName.Substring(pos + delimiter.Length).Trim();
+                    break;
+                }
+            }
         }
     }
 }

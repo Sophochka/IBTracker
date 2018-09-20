@@ -1,4 +1,5 @@
 using SQLite;
+using IBTracker.Contracts;
 
 namespace IBTracker.Data
 {

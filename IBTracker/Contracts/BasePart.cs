@@ -1,6 +1,6 @@
 using SQLite;
 
-namespace IBTracker.Data
+namespace IBTracker.Contracts
 {
     public class BasePart
     {

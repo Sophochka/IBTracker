@@ -1,4 +1,6 @@
+using System;
 using SQLite;
+using IBTracker.Contracts;
 
 namespace IBTracker.Data
 {
@@ -6,7 +8,11 @@ namespace IBTracker.Data
     public class SchoolPart : BasePart
     {
         [Unique]
+        public string FullName { get; set; }
+
         public string Name { get; set; }
+
+        public string City { get; set; }
 
         public string Site { get; set; }
 

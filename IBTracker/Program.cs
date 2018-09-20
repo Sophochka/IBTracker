@@ -11,29 +11,19 @@ namespace IBTracker
 {
     class Program
     {
-        private const string AppName = "IBSchool_Tracker";
-        private const string DatabasePath = "./Data/Database/IBSchools.db";
-        private static readonly Logger.Level LogLevel = Logger.Level.Debug;
-
-        private static SearchFields SearchFields = new SearchFields
-        {
-            Region = SchoolRegions.EuropeMEastAfrica,
-            Country = SchoolCountries.Poland,
-            Keywords = "",
-            Language = "",
-            BoardingFacilities = "",
-            SchoolGender = "",
-        };
-
         private static void Main(string[] args)
         {
-            Logger.Init(LogLevel);
-            Logger.Info($"Collect for country {SearchFields.Country}...");
+            var config = new Config();
+
+            Logger.Init(config.LogLevel);
+            Logger.Info($"Collect for country {config.SearchFields.Country}...");
 
             var schoolInfo = new List<SchoolInfo>();
-            var storage = new Storage(DatabasePath, SearchFields.ToString());
-            HandleParts<SchoolPart>(schoolInfo, new SchoolPartHandler(SearchFields), storage, true, true);
-            HandleParts<RatingPartPL>(schoolInfo, new RatingPartHandlerPL(), storage, false);
+            var storage = new Storage(config.DatabasePath, config.SearchIndex);
+            var links = storage.Read<PartLink>();
+
+            HandleParts<SchoolPart>(schoolInfo, links, new SchoolPartHandler(config.SearchFields), storage, true, true);
+            HandleParts<RatingPartPL>(schoolInfo, links, new RatingPartHandlerPL(), storage, false);
 
             //var scheets = new Sheets(AppName);
             //scheets.Test();
@@ -43,9 +33,12 @@ namespace IBTracker
             Console.ReadLine();
         }
 
-        private static void HandleParts<T>(ICollection<SchoolInfo> schools, IPartHandler handler, Storage storage, bool forceRetrieve, bool clearIfRetrieve = false) where T : BasePart, new()
+        private static void HandleParts<T>(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IPartHandler handler, Storage storage, bool forceRetrieve, bool clearIfRetrieve = false) where T : BasePart, new()
         {
             IEnumerable<T> parts = null;
+            var partName = typeof(T).Name;
+            partName = partName.Substring(0, partName.IndexOf("Part"));
+            Logger.Info($"Start part \"{partName}\"...");
 
             if (!forceRetrieve)
             {
@@ -64,12 +57,11 @@ namespace IBTracker
                 storage.Write(parts);
             }
 
-            var name = typeof(T).Name;
-            name = name.Substring(0, name.IndexOf("Part"));
             var action = forceRetrieve ? "Retrieved" : "Loaded";
-            Logger.Info($"{action} {parts.Count()} {name} items.");
+            Logger.Info($"{action}: {parts.Count()}");
 
-            handler.Link(schools, parts);
+            var count = handler.Link(schools, links, parts);
+            Logger.Info($"Linked {count} from {parts.Count()}");
         } 
     }
 }

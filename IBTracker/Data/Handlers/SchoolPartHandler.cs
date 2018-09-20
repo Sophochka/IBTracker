@@ -49,7 +49,7 @@ namespace IBTracker.Data
             return parts;
         }
 
-        public int Link(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IEnumerable<BasePart> parts)
+        public int Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
         {
             var schoolParts = parts as IEnumerable<SchoolPart>;
             if (schoolParts == null) return 0;

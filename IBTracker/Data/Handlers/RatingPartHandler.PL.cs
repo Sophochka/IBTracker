@@ -17,6 +17,8 @@ namespace IBTracker.Data
 
         private const string RatingTablePath = "//*[@id=\"content_tabele\"]/table/tbody";
 
+        public Type PartType => typeof(RatingPartPL);
+
         public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
         {
             var ratings = new List<RatingPartPL>();
@@ -32,7 +34,7 @@ namespace IBTracker.Data
             return ratings.OrderBy(r => r.Name);
         }
 
-        public int Link(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IEnumerable<BasePart> parts)
+        public int Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
         {
             var ratingParts = parts as IEnumerable<RatingPartPL>;
             if (ratingParts == null) return 0;

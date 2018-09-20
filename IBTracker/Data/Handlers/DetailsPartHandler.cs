@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Web;
 using HtmlAgilityPack;
 using IBTracker.Contracts;
@@ -10,12 +11,22 @@ namespace IBTracker.Data
 {
     public class DetailsPartHandler : IPartHandler
     {
+        public Type PartType => typeof(DetailsPart);
+
         public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
         {
-            return null;
+            var count = 1;
+            Logger.BeginProgress(schools.Count);
+            foreach(var school in schools)
+            {
+                Thread.Sleep(500);
+                Logger.SetProgress(count++);
+            }
+
+            return Enumerable.Empty<DetailsPart>();
         }
 
-        public int Link(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IEnumerable<BasePart> parts)
+        public int Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
         {
             return 0;
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 using IBTracker.Contracts;
 using IBTracker.Google;
@@ -16,14 +17,20 @@ namespace IBTracker
             var config = new Config();
 
             Logger.Init(config.LogLevel);
-            Logger.Info($"Collect for country {config.SearchFields.Country}...");
+            Logger.Info($"Collect for country {config.SearchFields.Country}");
 
-            var schoolInfo = new List<SchoolInfo>();
             var storage = new Storage(config.DatabasePath, config.SearchIndex);
             var links = storage.Read<PartLink>();
+            var schools = new List<SchoolInfo>();
 
-            HandleParts<SchoolPart>(schoolInfo, links, new SchoolPartHandler(config.SearchFields), storage, true, true);
-            HandleParts<RatingPartPL>(schoolInfo, links, new RatingPartHandlerPL(), storage, false);
+            var forceLink = false;
+            foreach (var parameters in config.Handlers)
+            {
+                HandlePart(schools, links, storage, parameters);
+                forceLink |= parameters.ForceLink;
+            }
+
+            UpdateLinks(schools, links, storage, forceLink);
 
             //var scheets = new Sheets(AppName);
             //scheets.Test();
@@ -33,23 +40,29 @@ namespace IBTracker
             Console.ReadLine();
         }
 
-        private static void HandleParts<T>(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, IPartHandler handler, Storage storage, bool forceRetrieve, bool clearIfRetrieve = false) where T : BasePart, new()
+        private static void HandlePart(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, Storage storage, HandlerParams item)
+        {
+            var type = typeof(Program);
+            var method = type.GetMethod("HandleParts", BindingFlags.NonPublic | BindingFlags.Static);
+            var generic = method.MakeGenericMethod(item.Handler.PartType);
+            generic.Invoke(null, new object[] { schools, links, storage, item });
+        }
+
+        private static void HandleParts<T>(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, Storage storage, HandlerParams item) where T : BasePart, new()
         {
             IEnumerable<T> parts = null;
-            var partName = typeof(T).Name;
-            partName = partName.Substring(0, partName.IndexOf("Part"));
-            Logger.Info($"Start part \"{partName}\"...");
+            Logger.Info($"Retrieve \"{item.Name}\" parts...", true);
 
-            if (!forceRetrieve)
+            if (!item.ForceRetrieve)
             {
                 parts = storage.Read<T>();
-                forceRetrieve = parts == null;
+                item.ForceRetrieve = parts == null;
             }
 
-            if (forceRetrieve)
+            if (item.ForceRetrieve)
             {
-                parts = new List<T>(handler.Read(schools) as IEnumerable<T>);
-                if (clearIfRetrieve) 
+                parts = new List<T>(item.Handler.Read(schools) as IEnumerable<T>);
+                if (item.ClearIfRetrieve) 
                 {
                     storage.Clear();
                 }  
@@ -57,11 +70,52 @@ namespace IBTracker
                 storage.Write(parts);
             }
 
-            var action = forceRetrieve ? "Retrieved" : "Loaded";
-            Logger.Info($"{action}: {parts.Count()}");
+            var action = item.ForceRetrieve ? "Retrieved" : "Loaded";
+            Logger.Info($"{action} {parts.Count()} items.");
 
-            var count = handler.Link(schools, links, parts);
-            Logger.Info($"Linked {count} from {parts.Count()}");
-        } 
+            if (parts.Count() == 0)
+            {
+                Logger.Info($"Nothing to link.");
+                return;
+            }
+
+            Logger.Info($"Link \"{item.Name}\" parts...", true);
+
+            var count = 0;
+            item.ForceLink |= item.ForceRetrieve || links == null;
+            if (!item.ForceLink)
+            {
+                var partsDict = parts.ToDictionary(p => p.Id);
+                foreach (var link in links)
+                {
+
+                }
+            }
+
+            if (item.ForceLink)
+            {
+                count = item.Handler.Link(schools, parts);
+            }
+
+            action = item.ForceLink ? "Linked" : "Restored";
+            Logger.Info($"{action} {count} from {parts.Count()} items.");
+        }
+
+        private static void UpdateLinks(ICollection<SchoolInfo> schools, IEnumerable<PartLink> links, Storage storage, bool forceLink) 
+        {
+            if (links != null && !forceLink) return;
+
+            if (links == null || forceLink)
+            {
+                links = schools.Select(s => new PartLink
+                {
+                    School = s.School.Id,
+                    Details = s.Details?.Id ?? 0,
+                    Rating = s.Rating?.Id ?? 0,
+                });
+            }
+
+            storage.Write(links); 
+        }
     }
 }

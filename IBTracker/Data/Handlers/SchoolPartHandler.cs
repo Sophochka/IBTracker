@@ -34,7 +34,7 @@ namespace IBTracker.Data
             this.fields = fields;
         }
 
-        public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
+        public IEnumerable<BasePart> Read(IDictionary<int, SchoolInfo> schools)
         {
             var parts = new List<SchoolPart>();
             Extensions.ParsePages(
@@ -49,18 +49,16 @@ namespace IBTracker.Data
             return parts;
         }
 
-        public int Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
+        public int Link(IDictionary<int, SchoolInfo> schools, IDictionary<int, BasePart> parts)
         {
-            var schoolParts = parts as IEnumerable<SchoolPart>;
-            if (schoolParts == null) return 0;
-
             schools.Clear();
-            foreach (var part in schoolParts)
+            foreach (var part in parts)
             {
                 schools.Add(
+                    part.Key,
                     new SchoolInfo
                     {
-                        School = part
+                        School = part.Value as SchoolPart
                     });
             }
 

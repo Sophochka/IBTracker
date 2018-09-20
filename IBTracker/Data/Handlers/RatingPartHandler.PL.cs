@@ -19,7 +19,7 @@ namespace IBTracker.Data
 
         public Type PartType => typeof(RatingPartPL);
 
-        public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
+        public IEnumerable<BasePart> Read(IDictionary<int, SchoolInfo> schools)
         {
             var ratings = new List<RatingPartPL>();
             Extensions.ParsePages(
@@ -34,21 +34,19 @@ namespace IBTracker.Data
             return ratings.OrderBy(r => r.Name);
         }
 
-        public int Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
+        public int Link(IDictionary<int, SchoolInfo> schools, IDictionary<int, BasePart> parts)
         {
-            var ratingParts = parts as IEnumerable<RatingPartPL>;
-            if (ratingParts == null) return 0;
-
             var count = 0;
-            foreach (var info in schools)
+            var partValues = parts.Values.Cast<RatingPartPL>();
+            foreach (var info in schools.Values)
             {
-                var items1 = ratingParts.Where(r => r.Name.StartsWith(info.School.Name, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                var items1 = partValues.Where(r => r.Name.StartsWith(info.School.Name, StringComparison.InvariantCultureIgnoreCase)).ToList();
                 if (items1.Count > 0)
                 {
                     Logger.Debug($"School \"{info.School.Name}\" in {items1.Count} ratings");
                 } 
 
-                var items2 = ratingParts.Where(r => info.School.Name.StartsWith(r.Name, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                var items2 = partValues.Where(r => info.School.Name.StartsWith(r.Name, StringComparison.InvariantCultureIgnoreCase)).ToList();
                 if (items2.Count > 0)
                 {
                     Logger.Debug($"School \"{info.School.Name}\" contains {items2.Count} ratings");

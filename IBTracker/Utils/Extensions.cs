@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using HtmlAgilityPack;
+using IBTracker.Contracts;
 
 namespace IBTracker.Utils
 {
@@ -48,6 +49,11 @@ namespace IBTracker.Utils
         public static bool ParseCheck(this HtmlNode node, string path)
         {
             return node.SelectNodes(path)?.FirstOrDefault() != null;
+        }
+
+        public static IDictionary<int, T> ToDictionary<T>(this IEnumerable<T> list) where T : BasePart
+        {
+            return list.ToDictionary(p => p.Id);
         }
     }
 }

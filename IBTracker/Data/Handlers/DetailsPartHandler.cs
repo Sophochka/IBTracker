@@ -13,7 +13,7 @@ namespace IBTracker.Data
     {
         public Type PartType => typeof(DetailsPart);
 
-        public IEnumerable<BasePart> Read(ICollection<SchoolInfo> schools)
+        public IEnumerable<BasePart> Read(IDictionary<int, SchoolInfo> schools)
         {
             var count = 1;
             Logger.BeginProgress(schools.Count);
@@ -26,8 +26,11 @@ namespace IBTracker.Data
             return Enumerable.Empty<DetailsPart>();
         }
 
-        public int Link(ICollection<SchoolInfo> schools, IEnumerable<BasePart> parts)
+        public int Link(IDictionary<int, SchoolInfo> schools, IDictionary<int, BasePart> parts)
         {
+            var detailsParts = parts as IDictionary<int, DetailsPart>;
+            if (detailsParts == null) return 0;
+            
             return 0;
         }
 

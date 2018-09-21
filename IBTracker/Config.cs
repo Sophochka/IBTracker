@@ -27,8 +27,8 @@ namespace IBTracker
         {
             Handlers = new[]
             {
-                new HandlerParams(nameof(PartLink.School), new SchoolPartHandler(SearchFields), true, false, true),
-                new HandlerParams(nameof(PartLink.Details), new DetailsPartHandler(), true, true),
+                new HandlerParams(nameof(PartLink.School), new SchoolPartHandler(SearchFields), false, false),
+                new HandlerParams(nameof(PartLink.Details), new DetailsPartHandler(), false, true),
                 // new HandlerParams(nameof(PartLink.Rating), new RatingPartHandlerPL(), false, false),
             };
         }
@@ -40,15 +40,15 @@ namespace IBTracker
         public IPartHandler Handler { get; }
         public bool ForceRetrieve { get; set; }
         public bool ForceLink { get; set; }
-        public bool ClearIfRetrieve { get; }
+        public bool PrimaryKey { get; set; }
 
-        public HandlerParams(string name, IPartHandler handler, bool forceRetrieve, bool forceLink, bool clearIfRetrieve = false)
+        public HandlerParams(string name, IPartHandler handler, bool forceRetrieve, bool forceLink)
         {
             Name = name;
             Handler = handler;
             ForceRetrieve = forceRetrieve;
             ForceLink = forceLink;
-            ClearIfRetrieve = clearIfRetrieve;
+            PrimaryKey = false;
         }
     }
 }

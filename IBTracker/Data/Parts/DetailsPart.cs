@@ -6,6 +6,7 @@ namespace IBTracker.Data
     [Table("Details")]
     public class DetailsPart : BasePart
     {
+        public int School { get; set; }
         public string Code { get; set; }
         public string Type { get; set; }
         public string Head { get; set; }

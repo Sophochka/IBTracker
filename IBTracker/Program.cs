@@ -24,10 +24,11 @@ namespace IBTracker
             var schools = new Dictionary<int, SchoolInfo>();
 
             var forceLink = false;
-            foreach (var parameters in config.Handlers)
+            foreach (var prms in config.Handlers)
             {
-                HandlePart(schools, links, storage, parameters);
-                forceLink |= parameters.ForceLink;
+                prms.PrimaryKey = prms == config.Handlers.First();
+                HandlePart(schools, links, storage, prms);
+                forceLink |= prms.ForceLink;
             }
 
             UpdateLinks(schools, links, storage, forceLink);
@@ -82,9 +83,9 @@ namespace IBTracker
             if (prms.ForceRetrieve)
             {
                 parts = new List<T>(prms.Handler.Read(schools) as IEnumerable<T>);
-                if (prms.ClearIfRetrieve) 
+                if (prms.PrimaryKey) 
                 {
-                    storage.Clear();
+                    storage.Clear(false);
                 }  
 
                 storage.Write(parts);
@@ -93,37 +94,38 @@ namespace IBTracker
             return parts;
         }
 
-        private static int LinkParts(IDictionary<int, SchoolInfo> schools, IEnumerable<PartLink> links, IDictionary<int, BasePart> parts, HandlerParams item)
+        private static int LinkParts(IDictionary<int, SchoolInfo> schools, IEnumerable<PartLink> links, IDictionary<int, BasePart> parts, HandlerParams prms)
         {
             if (parts.Count() == 0) return -1;
 
             var count = 0;
-            item.ForceLink |= item.ForceRetrieve || links == null || !links.Any();
-            if (!item.ForceLink)
+            prms.ForceLink |= prms.ForceRetrieve || links == null || !links.Any();
+            if (!prms.ForceLink && !prms.PrimaryKey)
             {
-                var propInfo = typeof(SchoolInfo).GetProperty(item.Name, BindingFlags.Public | BindingFlags.Instance);
-                var propLink = typeof(PartLink).GetProperty(item.Name, BindingFlags.Public | BindingFlags.Instance);
+                var propInfo = typeof(SchoolInfo).GetProperty(prms.Name, BindingFlags.Public | BindingFlags.Instance);
+                var propLink = typeof(PartLink).GetProperty(prms.Name, BindingFlags.Public | BindingFlags.Instance);
                 if (!propInfo?.CanWrite ?? false || propLink == null) return -1;
 
                 foreach (var link in links)
                 {
                     SchoolInfo info;
-                    if (!schools.TryGetValue(link.School, out info)) return -1;
+                    if (!schools.TryGetValue(link.School, out info)) 
+                        return -1;
 
                     var id = propLink.GetValue(link) as int? ?? 0;
                     if (id == 0) continue;
 
                     BasePart part;
-                    if (!parts.TryGetValue(id, out part)) return -1;
+                    if (!parts.TryGetValue(id, out part)) 
+                        return -1;
 
                     propInfo.SetValue(info, part, null);
                     count++;
                 }
             }
-
-            if (item.ForceLink)
+            else
             {
-                count = item.Handler.Link(schools, parts);
+                count = prms.Handler.Link(schools, parts);
             }
 
             return count;

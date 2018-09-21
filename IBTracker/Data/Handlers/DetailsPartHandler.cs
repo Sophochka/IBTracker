@@ -25,7 +25,7 @@ namespace IBTracker.Data
             {
                 var document = new HtmlDocument();
                 document.Load(webClient.OpenRead(info.School.Site), Encoding.UTF8);
-                parts.Add(ParsePage(document));
+                parts.Add(ParsePage(document, info.School.Id));
                 Logger.SetProgress(count++);
             }
 
@@ -38,13 +38,14 @@ namespace IBTracker.Data
             return 0;
         }
 
-        private DetailsPart ParsePage(HtmlDocument document)
+        private DetailsPart ParsePage(HtmlDocument document, int schoolId)
         {
             var values = GetValues(document).ToList();
 
             // https://www.google.com/maps/?q=51.2499,22.5357
             var detailsPart = new DetailsPart
             {
+                School = schoolId,
                 Code = GetValue(values, "code:"),
                 Type = GetValue(values, "Type:"),
                 Head = GetValue(values, "Head"),

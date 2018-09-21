@@ -5,17 +5,26 @@ using SQLite;
 
 namespace IBTracker.Data
 {
-    public class QueryRecord
-    {
-        public string Name { get; set; }
-    }
-
     public class Storage : IDisposable
     {
+        private class QueryRecord
+        {
+            public string Name { get; set; }
+        }
+
         private const string IndexParameterName = "Index";
         private const string DateParameterName = "Date";
 
         private string searchIndex;        
+
+        private string[] CreationScript = 
+        {
+            "DROP VIEW VSchools",
+            "CREATE VIEW VSchools AS " + 
+                "SELECT Schools.*, Details.* " + 
+                "FROM Schools " + 
+                "INNER JOIN Details ON Details.School = Schools.Id"
+        };
 
         public readonly SQLiteConnection Connection;
 
@@ -25,24 +34,21 @@ namespace IBTracker.Data
             Connection = new SQLiteConnection(databasePath);
             if (searchIndex != ReadParameter(IndexParameterName))
             {
-                Clear();
+                Clear(true);
             }
         }
 
-        public void Clear()
+        public void Clear(bool full)
         {
             var command = Connection.CreateCommand("SELECT NAME FROM SQLITE_MASTER WHERE TYPE = 'table'");
-            var records = command.ExecuteQuery<QueryRecord>();
-            foreach(var rec in records.Where(r => !r.Name.StartsWith("sqlite")))
-            {
-                command = Connection.CreateCommand($"DROP TABLE '{rec.Name}'");
-                command.ExecuteNonQuery();
-            }
+            var records = command.ExecuteQuery<QueryRecord>().Where(
+                    r => !r.Name.StartsWith("sqlite") || full && r.Name == GetTableName<PartLink>());
 
+            var script = new List<string>(records.Select(r => $"DROP TABLE '{r.Name}'"));
+            script.AddRange(CreationScript);
+            ExecuteScript(script);
             WriteParameter(IndexParameterName, searchIndex);
             WriteParameter(DateParameterName, DateTime.Now.ToString());
-            command = Connection.CreateCommand("CREATE VIEW IF NOT EXISTS VSchools AS SELECT Schools.*, Details.* FROM Schools INNER JOIN Details ON Details.Id = Schools.Id");
-            command.ExecuteNonQuery();
         }
 
         public void Dispose()
@@ -65,11 +71,13 @@ namespace IBTracker.Data
             records.ToList().ForEach(r => Connection.Insert(r));
         }
 
-        private string GetTableName<T>()
+        private void ExecuteScript(IEnumerable<string> script)
         {
-            var type = typeof(T);
-            var tableNameAttr = type.GetCustomAttributes(typeof(TableAttribute), true).FirstOrDefault() as TableAttribute;
-            return tableNameAttr?.Name ?? type.Name;
+            foreach(var line in script)
+            {
+                var command = Connection.CreateCommand(line);
+                command.ExecuteNonQuery();
+            }
         }
 
         private bool Exists<T>()
@@ -81,6 +89,13 @@ namespace IBTracker.Data
             int result = command.ExecuteScalar<int>();
         
             return (result > 0);
+        }
+
+        private string GetTableName<T>()
+        {
+            var type = typeof(T);
+            var tableNameAttr = type.GetCustomAttributes(typeof(TableAttribute), true).FirstOrDefault() as TableAttribute;
+            return tableNameAttr?.Name ?? type.Name;
         }
 
         private string ReadParameter(string name)
